@@ -587,7 +587,7 @@
         }
     </script>
 
-    <script type="module">
+   <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getDatabase, ref as dbRef, push, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
@@ -602,7 +602,47 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- IMGBB FREE IMAGE UPLOAD ---
+        const escapeHTML = (str) => {
+            if(!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+        };
+
+        window.pushContactToDB = function(name, email, msg) {
+            return push(dbRef(db, 'contacts'), {
+                name: name,
+                email: email,
+                message: msg,
+                date: new Date().toLocaleString()
+            }).then(() => {
+                alert("ඔබගේ පණිවිඩය සාර්ථකව යවන ලදී! ✅");
+            }).catch((error) => {
+                alert("Error: " + error.message);
+            });
+        };
+
+        window.pushWishToDB = function(name, text) {
+            return push(dbRef(db, 'wishes'), { 
+                name: name, 
+                email: "No Email Provided", 
+                text: text, 
+                date: new Date().toLocaleString() 
+            }).then(() => { 
+                alert("ඔයාගේ සුබපැතුම සාර්ථකව යැව්වා! ❤️"); 
+            }).catch((error) => { alert("Error: " + error.message); });
+        };
+
+        window.pushOLCommentToDB = function(name, text) {
+            return push(dbRef(db, 'ol_comments'), { 
+                name: name, 
+                email: "No Email Provided", 
+                text: text, 
+                date: new Date().toLocaleString() 
+            }).then(() => { 
+                alert("ඔයාගේ අදහස සාර්ථකව යැව්වා! 🎓"); 
+            }).catch((error) => { alert("Error: " + error.message); });
+        };
+
+        // --- කිසිම API එකක් නැතුව Firebase එකටම Photo යවන අලුත් ක්‍රමය ---
         window.uploadOLImageImgBB = async function() {
             const uploaderName = document.getElementById('olImgUploaderName').value;
             if (uploaderName.trim() === '') { alert("කරුණාකර ඔබගේ නම ඇතුලත් කරන්න!"); return; }
@@ -616,44 +656,46 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
             btn.disabled = true;
 
-            // ImgBB API Request
-            const formData = new FormData();
-            formData.append("image", file);
-
-            // ඔයාට ඕන නම් ImgBB සයිට් එකෙන් Free API එකක් අරන් මෙතන දාන්න පුළුවන්
-            const IMGBB_API_KEY = "6f103b41d227f2f11ed31ddcd3291244"; 
-
-            try {
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: "POST",
-                    body: formData
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    const imageUrl = result.data.url;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = async function() {
+                    // පින්තූරේ සයිස් එක අඩු කරනවා (Compress කරනවා) DB එක පිරෙන්නේ නැති වෙන්න
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600; // ෆෝන් වලට හොඳටම ඇති සයිස් එකක්
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
                     
-                    // Save image URL to Firebase Database
-                    await push(dbRef(db, 'ol_images'), {
-                        name: uploaderName,
-                        url: imageUrl,
-                        date: new Date().toLocaleString()
-                    });
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // පින්තූරය Text (Base64) එකක් විදිහට හරවනවා
+                    const base64Image = canvas.toDataURL('image/jpeg', 0.6); // 60% Quality
 
-                    alert("පින්තූරය සාර්ථකව Upload විය! 📸 (Storage saved!)");
-                    fileInput.value = '';
-                    document.getElementById('olImgUploaderName').value = '';
-                    document.getElementById('imgNameLabel').innerText = 'No image selected';
-                    window.fetchOLImages(); 
-                } else {
-                    alert("Upload Error: " + result.error.message);
+                    try {
+                        // කෙලින්ම Firebase Database එකට යවනවා
+                        await push(dbRef(db, 'ol_images'), {
+                            name: uploaderName,
+                            url: base64Image,
+                            date: new Date().toLocaleString()
+                        });
+
+                        alert("පින්තූරය සාර්ථකව Upload විය! 📸");
+                        fileInput.value = '';
+                        document.getElementById('olImgUploaderName').value = '';
+                        document.getElementById('imgNameLabel').innerText = 'No image selected';
+                        window.fetchOLImages(); 
+                    } catch (error) {
+                        alert("Upload Error: " + error.message);
+                    } finally {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
                 }
-            } catch (error) {
-                alert("Upload Failed: Check connection");
-            } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
+            };
         };
 
         window.fetchOLImages = function() {
@@ -666,8 +708,8 @@
                     images.reverse().forEach(img => {
                         gallery.innerHTML += `
                         <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; text-align: center; border: 1px solid rgba(0, 210, 255, 0.1);">
-                            <img src="${img.url}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
-                            <span style="font-size: 11px; color: #00d2ff; display: block;">👤 ${img.name}</span>
+                            <img src="${escapeHTML(img.url)}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
+                            <span style="font-size: 11px; color: #00d2ff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">👤 ${escapeHTML(img.name)}</span>
                         </div>`;
                     });
                 } else {
@@ -678,3 +720,4 @@
     </script>
 </body>
 </html>
+
