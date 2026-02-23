@@ -147,11 +147,13 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             pointer-events: none; border: 0px solid transparent; z-index: 9999;
         }
+        /* Performance Lag Fix here */
         .rgb-active .rgb-effect {
-            border: 6px solid; border-image: linear-gradient(45deg, red, yellow, green, cyan, blue, magenta, red) 1;
-            animation: rgb-glow 3s linear infinite;
+            box-shadow: inset 0 0 20px var(--primary-color), inset 0 0 40px rgba(255, 51, 102, 0.5);
+            transition: 0.5s ease;
         }
-        @keyframes rgb-glow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+
+        @keyframes blinkCursor { 0%, 100% { border-color: transparent; } 50% { border-color: var(--primary-color); } }
 
         /* --- MAIN MENU SIDEBAR & ANIMATIONS --- */
         .sidebar {
@@ -196,6 +198,7 @@
         .sidebar.active ul li:nth-child(11) { transition-delay: 0.6s; }
         .sidebar.active ul li:nth-child(12) { transition-delay: 0.65s; }
         .sidebar.active ul li:nth-child(13) { transition-delay: 0.7s; }
+        .sidebar.active ul li:nth-child(14) { transition-delay: 0.75s; }
 
         .sidebar ul li:hover { 
             background: var(--glass); 
@@ -290,6 +293,11 @@
             <span><i class="fab fa-discord"></i> Bots</span>
         </div>
 
+        <div style="position: absolute; top: 40%; text-align: center; z-index: 5;" id="init-text">
+            <h2 style="font-size: 2.5rem; color: #fff; letter-spacing: 5px; text-transform: uppercase;">Initializing System<span style="animation: blinkCursor 0.8s infinite;">...</span></h2>
+            <p style="color: var(--primary-color); font-family: monospace; margin-top: 10px;">Establishing secure connection</p>
+        </div>
+
         <div class="loader-circle" id="main-loader"></div>
         <button class="login-btn" id="enter-btn" onclick="startApp()">Enter Yuven Hub</button>
         <p style="margin-top: 20px; opacity: 0.5; font-size: 0.8rem; position: relative; z-index: 10;">@vishath_kaushika_lakshan</p>
@@ -318,6 +326,7 @@
             <li onclick="showPage('services')"><i class="fas fa-briefcase"></i> <span class="lang-en">Services</span><span class="lang-si">සේවාවන්</span></li>
             <li onclick="showPage('life')"><i class="fas fa-feather-alt"></i> <span class="lang-en">Life & History</span><span class="lang-si">ජීවිතය සහ ඉතිහාසය</span></li>
             <li onclick="showPage('videos')"><i class="fas fa-video"></i> <span class="lang-en">Life Videos</span><span class="lang-si">වීඩියෝ</span></li>
+            <li onclick="showPage('music-player')"><i class="fas fa-headphones-alt" style="color: #00d2ff;"></i> <span class="lang-en">Lyrics Player</span><span class="lang-si">සිංදු සහ පද</span></li>
             <li onclick="showPage('bots')"><i class="fas fa-robot"></i> <span class="lang-en">Our Bots</span><span class="lang-si">අපේ බොට්ස්ලා</span></li>
             <li onclick="showPage('contact')"><i class="fas fa-envelope"></i> <span class="lang-en">Contact Me</span><span class="lang-si">සම්බන්ධ වන්න</span></li>
             <li onclick="openOLBatchSetup()"><i class="fas fa-graduation-cap" style="color: #00d2ff;"></i> <span class="lang-en">O/L Batch 2025(26)</span><span class="lang-si">O/L බැච් එක</span></li>
@@ -335,6 +344,10 @@
 
             <h1 style="font-size: 3rem; animation: slideDown 1s ease-out; position: relative; z-index: 2;"><span class="lang-en">Welcome to</span><span class="lang-si">සාදරයෙන් පිළිගනිමු</span> <span style="color: var(--primary-color); display: inline-block; animation: pulseText 2.5s infinite;">Yuven.site</span></h1>
             
+            <div style="font-size: 1.5rem; color: #fff; margin-top: 15px; margin-bottom: 25px; font-family: monospace; animation: slideDown 1s ease-out; position: relative; z-index: 2;">
+                > I am a <span id="typewriter" style="color: var(--primary-color); border-right: 2px solid var(--primary-color); padding-right: 5px; animation: blinkCursor 0.8s infinite;"></span>
+            </div>
+
             <p class="text-content lang-si" style="animation: fadeInAnim 1.5s ease-out; position: relative; z-index: 2;">ආයුබෝවන්! මගේ පෞද්ගලික වෙබ් අඩවියට සාදරයෙන් පිළිගන්නවා. මෙතනින් මගේ නිර්මාණ, මගේ අනාගත හීන, වගේම මම හදපු Project ගැන තොරතුරු බලාගන්න පුළුවන්.</p>
             <p class="text-content lang-en" style="animation: fadeInAnim 1.5s ease-out; position: relative; z-index: 2;">Hello! Welcome to my personal website. Here you can explore my creations, future dreams, and find information about the projects I have developed.</p>
             
@@ -398,6 +411,24 @@
             <div class="video-container">
                 <div class="vid-box" style="background: #000;">
                     <video id="lifeVid" width="100%" controls><source src="https://files.catbox.moe/603e50.mp4" type="video/mp4"></video>
+                </div>
+            </div>
+        </section>
+
+        <section id="music-player" class="glass-card hidden" style="text-align: center;">
+            <h2 class="section-title"><span class="lang-en">Vibe with Lyrics</span><span class="lang-si">සිංදු සහ පද පේළි</span></h2>
+            
+            <div style="background: rgba(0,0,0,0.4); padding: 30px; border-radius: 20px; margin-top: 30px; border: 1px solid var(--primary-color); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -50px; left: -50px; width: 100px; height: 100px; background: var(--primary-color); filter: blur(80px); opacity: 0.5;"></div>
+                
+                <img src="https://files.catbox.moe/c6ep3d.jpg" style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid #00d2ff; margin-bottom: 20px; animation: spin 10s linear infinite;">
+                
+                <audio id="lyric-audio" controls style="width: 100%; outline: none; border-radius: 10px;" ontimeupdate="updateLyrics()">
+                    <source src="YOUR_SONG_LINK_HERE.mp3" type="audio/mpeg">
+                </audio>
+
+                <div id="lyrics-display" style="margin-top: 25px; font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px #00d2ff; font-weight: bold; min-height: 60px; transition: all 0.3s ease;">
+                    🎵 Play the music...
                 </div>
             </div>
         </section>
@@ -597,6 +628,7 @@
 
         function startApp() {
             document.getElementById('enter-btn').style.display = 'none';
+            if(document.getElementById('init-text')) document.getElementById('init-text').style.display = 'none';
             document.getElementById('main-loader').style.display = 'block';
             
             setTimeout(() => {
@@ -607,6 +639,7 @@
                     let bgMusic = document.getElementById('bg-music');
                     bgMusic.play().catch(e => console.log("Audio play blocked by browser until user interacts."));
                     isMusicPlaying = true;
+                    typeEffect(); // Start typing effect here
                     if(window.fetchOLImages) window.fetchOLImages();
                 }, 800);
             }, 2000);
@@ -635,7 +668,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             let bgMusic = document.getElementById('bg-music');
-            if (id === 'videos') { bgMusic.pause(); } else { if (isMusicPlaying) { bgMusic.play().catch(e => console.log("Music blocked")); } }
+            if (id === 'videos' || id === 'music-player') { bgMusic.pause(); } else { if (isMusicPlaying) { bgMusic.play().catch(e => console.log("Music blocked")); } }
         }
 
         function checkSpecialPass() {
@@ -796,7 +829,67 @@
         }
 
         document.getElementById('bg-music').onplay = () => { isMusicPlaying = true; };
-        document.getElementById('bg-music').onpause = () => { if(document.getElementById('videos').classList.contains('hidden')) isMusicPlaying = false; };
+        document.getElementById('bg-music').onpause = () => { if(document.getElementById('videos').classList.contains('hidden') && document.getElementById('music-player').classList.contains('hidden')) isMusicPlaying = false; };
+
+        // --- NEW FEATURES JS ---
+        const words = ["Web Developer", "Python Scripter", "SAMP Coder", "Student"];
+        let wordIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+
+        function typeEffect() {
+            const target = document.getElementById('typewriter');
+            if(!target) return;
+            
+            const currentWord = words[wordIndex];
+            
+            if (isDeleting) {
+                target.innerText = currentWord.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                target.innerText = currentWord.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let typeSpeed = isDeleting ? 50 : 100;
+
+            if (!isDeleting && charIndex === currentWord.length) {
+                typeSpeed = 2000; // Pause before deleting
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                wordIndex = (wordIndex + 1) % words.length;
+                typeSpeed = 500; // Pause before typing new word
+            }
+            setTimeout(typeEffect, typeSpeed);
+        }
+
+        const lyricsData = [
+            { time: 0, text: "🎵 Play the music..." },
+            { time: 5, text: "Yeah, this is Yuven Hub..." },
+            { time: 10, text: "Welcome to my world 🌍" },
+            { time: 15, text: "Drop the beat! 🔥" }
+        ];
+
+        function updateLyrics() {
+            const audio = document.getElementById('lyric-audio');
+            const display = document.getElementById('lyrics-display');
+            let currentText = "🎵 Play the music...";
+            
+            for (let i = 0; i < lyricsData.length; i++) {
+                if (audio.currentTime >= lyricsData[i].time) {
+                    currentText = lyricsData[i].text;
+                }
+            }
+            
+            if (display.innerText !== currentText) {
+                display.style.opacity = 0;
+                setTimeout(() => {
+                    display.innerText = currentText;
+                    display.style.opacity = 1;
+                }, 200); // Smooth fade effect
+            }
+        }
     </script>
 
     <script type="module">
@@ -1017,4 +1110,3 @@
     </script>
 </body>
 </html>
-
